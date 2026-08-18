@@ -22,10 +22,6 @@ export default function Guest({ children }: PropsWithChildren) {
 
                     <div className="flex-1 w-full">{children}</div>
                 </div>
-
-                <div className="bg-surface-container-lowest border-t border-outline-variant py-4 px-8 text-center mt-auto">
-                    <p className="text-xs text-on-surface-variant"></p>
-                </div>
             </div>
         </div>
     );
