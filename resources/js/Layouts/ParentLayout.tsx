@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import FlashToaster from '@/Components/FlashToaster';
 
 export default function ParentLayout({ children, hideNav = false, title = 'Amanah Finance', backUrl = null }: { children: React.ReactNode, hideNav?: boolean, title?: string, backUrl?: string | null }) {
     const user = usePage().props.auth.user as any;
@@ -10,6 +11,7 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
     if (hideNav) {
         return (
             <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col relative pb-32">
+                <FlashToaster />
                 <header className="bg-surface border-b border-outline-variant/20 fixed top-0 left-0 w-full flex items-center justify-between px-margin-mobile h-16 z-50">
                     {backUrl ? (
                         <Link href={backUrl} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95">
@@ -32,6 +34,7 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
 
     return (
         <div className="bg-background text-on-background min-h-screen pb-24 md:pb-0 font-body-md text-body-md overflow-x-hidden">
+            <FlashToaster />
             {/* TopAppBar */}
             <header className="w-full top-0 left-0 bg-background flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto z-40 sticky md:relative">
                 <div className="flex items-center gap-4">

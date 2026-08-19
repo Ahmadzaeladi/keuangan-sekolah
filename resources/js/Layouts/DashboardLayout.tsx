@@ -7,6 +7,8 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+import FlashToaster from "@/Components/FlashToaster";
+
 export default function DashboardLayout({
     children,
 }: {
@@ -332,6 +334,7 @@ export default function DashboardLayout({
                     })}
                 </nav>
             </div>
+            <FlashToaster />
         </div>
     );
 }

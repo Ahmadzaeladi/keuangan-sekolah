@@ -1,9 +1,11 @@
 import { Link } from "@inertiajs/react";
 import { PropsWithChildren } from "react";
+import FlashToaster from "@/Components/FlashToaster";
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center islamic-pattern p-4">
+            <FlashToaster />
             <div className="w-full sm:max-w-md bg-surface border border-outline-variant rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col">
                 <div className="px-8 py-10 flex flex-col flex-1">
                     <div className="flex flex-col items-center mb-8">

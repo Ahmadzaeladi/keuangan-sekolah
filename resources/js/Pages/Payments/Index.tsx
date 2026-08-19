@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import DashboardLayout, { cn } from "@/Layouts/DashboardLayout";
 import { Head, router } from "@inertiajs/react";
 import axios from "axios";
+import { toast } from "sonner";
 
 export default function Payments() {
     const [searchNis, setSearchNis] = useState("");
@@ -15,28 +16,10 @@ export default function Payments() {
     // UI state
     const [isSearching, setIsSearching] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [notification, setNotification] = useState<{
-        show: boolean;
-        type: "success" | "error";
-        title: string;
-        message: string;
-    }>({ show: false, type: "success", title: "", message: "" });
 
     // Receipt state
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastTransaction, setLastTransaction] = useState<any>(null);
-
-    const showNotification = (
-        type: "success" | "error",
-        title: string,
-        message: string,
-    ) => {
-        setNotification({ show: true, type, title, message });
-        setTimeout(
-            () => setNotification((prev) => ({ ...prev, show: false })),
-            4000,
-        );
-    };
 
     const handleSearch = async () => {
         if (!searchNis.trim()) return;
@@ -45,7 +28,6 @@ export default function Payments() {
         setStudent(null);
         setUnpaidBills([]);
         setSelectedBillIds([]);
-        setNotification((prev) => ({ ...prev, show: false }));
 
         try {
             const res = await axios.get(
@@ -54,18 +36,10 @@ export default function Payments() {
             setStudent(res.data.student);
             setUnpaidBills(res.data.unpaid_bills);
             if (res.data.unpaid_bills.length === 0) {
-                showNotification(
-                    "success",
-                    "Tidak Ada Tagihan",
-                    "Siswa ini tidak memiliki tagihan yang belum dibayar.",
-                );
+                toast.success("Siswa ini tidak memiliki tagihan yang belum dibayar.");
             }
         } catch (error: any) {
-            showNotification(
-                "error",
-                "Tidak Ditemukan",
-                error.response?.data?.error || "Siswa tidak ditemukan.",
-            );
+            toast.error(error.response?.data?.error || "Siswa tidak ditemukan.");
         } finally {
             setIsSearching(false);
         }
@@ -162,21 +136,13 @@ export default function Payments() {
                     amount: processedAmount,
                 });
 
-                showNotification(
-                    "success",
-                    "Pembayaran Berhasil!",
-                    `Tanda terima untuk Rp ${processedAmount.toLocaleString("id-ID")} siap dicetak.`,
-                );
+                toast.success(`Pembayaran Berhasil! Tanda terima untuk Rp ${processedAmount.toLocaleString("id-ID")} siap dicetak.`);
                 setShowReceipt(true);
 
                 // Refresh list
                 handleSearch();
             } else {
-                showNotification(
-                    "error",
-                    "Gagal",
-                    "Terjadi kesalahan saat memproses pembayaran.",
-                );
+                toast.error("Terjadi kesalahan saat memproses pembayaran.");
             }
         };
 
@@ -190,36 +156,6 @@ export default function Payments() {
     return (
         <DashboardLayout>
             <Head title="Kasir SPP" />
-
-            {/* Modern Toast Notification */}
-            {notification.show && (
-                <div className="fixed top-6 right-6 z-50 animate-bounce print:hidden">
-                    <div className="bg-surface shadow-lg rounded-xl p-4 border border-outline-variant flex items-center gap-4 min-w-[300px]">
-                        <div
-                            className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                                notification.type === "success"
-                                    ? "bg-green-100 text-green-600"
-                                    : "bg-red-100 text-red-600",
-                            )}
-                        >
-                            <span className="material-symbols-outlined">
-                                {notification.type === "success"
-                                    ? "check"
-                                    : "error"}
-                            </span>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-on-surface text-sm">
-                                {notification.title}
-                            </h4>
-                            <p className="text-xs text-on-surface-variant mt-0.5">
-                                {notification.message}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Official Receipt Modal */}
             {showReceipt && lastTransaction && (

@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import DashboardLayout, { cn } from '@/Layouts/DashboardLayout';
 import { Head, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 
 export default function Automation({ classes = [], billTypes = [], academicYears = [] }: any) {
     const [status, setStatus] = useState('Generate All Bills');
     const [isProcessing, setIsProcessing] = useState(false);
     
-    // Notification state
-    const [notification, setNotification] = useState<{show: boolean, type: 'success'|'error', title: string, message: string}>({ show: false, type: 'success', title: '', message: '' });
-
     // Form state
     const [form, setForm] = useState({
         bill_type_id: billTypes.length > 0 ? billTypes[0].id : '',
@@ -20,24 +18,18 @@ export default function Automation({ classes = [], billTypes = [], academicYears
         due_date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10).toISOString().split('T')[0]
     });
 
-    const showNotification = (type: 'success'|'error', title: string, message: string) => {
-        setNotification({ show: true, type, title, message });
-        setTimeout(() => setNotification(prev => ({ ...prev, show: false })), 4000);
-    };
-
     const handleGenerate = () => {
         setIsProcessing(true);
         setStatus('Memproses...');
         router.post('/bills/bulk', form, {
             preserveScroll: true,
             onSuccess: (page: any) => {
-                showNotification('success', 'Berhasil', page.props.flash?.success || 'Tagihan berhasil di-generate.');
                 setStatus('Generate All Bills');
                 setIsProcessing(false);
             },
             onError: (errors) => {
                 const firstError = Object.values(errors)[0] as string;
-                showNotification('error', 'Gagal Memproses', firstError || 'Pastikan semua kolom terisi dengan benar.');
+                toast.error(firstError || 'Pastikan semua kolom terisi dengan benar.');
                 setStatus('Generate All Bills');
                 setIsProcessing(false);
             }
@@ -47,24 +39,6 @@ export default function Automation({ classes = [], billTypes = [], academicYears
     return (
         <DashboardLayout>
             <Head title="Otomasi Tagihan" />
-
-            {/* Modern Toast Notification */}
-            {notification.show && (
-                <div className="fixed top-6 right-6 z-50 animate-bounce">
-                    <div className="bg-surface shadow-lg rounded-xl p-4 border border-outline-variant flex items-center gap-4 min-w-[300px]">
-                        <div className={cn(
-                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                            notification.type === 'success' ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                        )}>
-                            <span className="material-symbols-outlined">{notification.type === 'success' ? 'check' : 'error'}</span>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-on-surface text-sm">{notification.title}</h4>
-                            <p className="text-xs text-on-surface-variant mt-0.5">{notification.message}</p>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex justify-between items-end">
