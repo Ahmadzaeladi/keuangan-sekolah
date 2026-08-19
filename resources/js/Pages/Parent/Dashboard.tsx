@@ -1,144 +1,118 @@
-import React, { useState, useMemo } from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import React from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import ParentLayout from '@/Layouts/ParentLayout';
-import { Card, CardContent } from '@/Components/UI/Card';
-import { Badge } from '@/Components/UI/Badge';
 
-export default function Dashboard({ students, auth }: any) {
+export default function Dashboard({ students }: any) {
+    // Collect all bills from students
+    let totalUnpaid = 0;
+    let overdueAmount = 0;
+    const unpaidBills: any[] = [];
+    let lastPayment: any = null; // Mock or fetch actual last payment
+
+    students.forEach((s: any) => {
+        s.bills.forEach((b: any) => {
+            if (b.status !== 'PAID') {
+                totalUnpaid += Number(b.amount);
+                unpaidBills.push(b);
+                if (new Date(b.due_date) < new Date()) {
+                    overdueAmount += Number(b.amount);
+                }
+            }
+        });
+    });
+
     const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-    const [payBill, setPayBill] = useState<any>(null);
-    const [filter, setFilter] = useState('ALL');
-    const { post, processing } = useForm({ method: 'QRIS' });
-
-    const handlePay = (e: any) => {
-        e.preventDefault();
-        post(`/parent/pay/${payBill.id}`, {
-            onSuccess: () => setPayBill(null)
-        });
-    };
-
-    const translateStatus = (status: string) => {
-        if (status === 'PAID') return 'Lunas';
-        if (status === 'PARTIAL') return 'Sebagian';
-        return 'Belum Lunas';
-    };
-
-    const getFilteredBills = (bills: any[]) => {
-        if (filter === 'ALL') return bills;
-        
-        return bills.filter(b => {
-            const date = new Date(b.due_date);
-            const month = date.getMonth() + 1; // 1-12
-            const year = date.getFullYear();
-            const currentYear = new Date().getFullYear();
-
-            if (filter === 'GANJIL') {
-                return month >= 7 && month <= 12;
-            }
-            if (filter === 'GENAP') {
-                return month >= 1 && month <= 6;
-            }
-            if (filter === 'TAHUN_INI') {
-                return year === currentYear;
-            }
-            return true;
-        });
-    };
 
     return (
-        <ParentLayout>
+        <ParentLayout title="Amanah Finance">
             <Head title="Portal Orang Tua" />
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Selamat pagi, {auth.user.name} 👋</h1>
-            <p className="text-slate-500 mb-6">Pantau tagihan dan pembayaran anak Anda.</p>
-
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3">
-                <label className="text-sm font-medium text-slate-700">Tampilkan Tagihan:</label>
-                <select value={filter} onChange={e => setFilter(e.target.value)} className="rounded-md border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full sm:w-auto">
-                    <option value="ALL">Semua Tagihan</option>
-                    <option value="GANJIL">Semester Ganjil (Jul - Des)</option>
-                    <option value="GENAP">Semester Genap (Jan - Jun)</option>
-                    <option value="TAHUN_INI">Tahun Ini</option>
-                </select>
-            </div>
-
-            {students.map((student: any) => {
-                const filteredBills = getFilteredBills(student.bills);
+            
+            <div className="max-w-container-max mx-auto pt-4 md:pt-8 flex flex-col gap-6 md:gap-8 px-4 md:px-8">
                 
-                return (
-                    <div key={student.id} className="mb-10">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">
-                                {student.name.charAt(0)}
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold">{student.name}</h2>
-                                <p className="text-sm text-slate-500">{student.student_class.name} • NIS: {student.nis}</p>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            {filteredBills.length === 0 ? (
-                                <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">Tidak ada tagihan untuk periode ini.</div>
-                            ) : filteredBills.map((b: any) => (
-                                <Card key={b.id} className="overflow-hidden border-slate-200 shadow-sm">
-                                    <CardContent className="p-4 sm:p-5">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className="font-bold text-slate-900">{b.bill_type.name}</h3>
-                                                <p className="text-xs text-slate-500">{b.period}</p>
-                                            </div>
-                                            <Badge variant={b.status === 'PAID' ? 'success' : 'warning'}>{translateStatus(b.status)}</Badge>
-                                        </div>
-                                        <div className="flex justify-between items-end mt-4">
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Jatuh Tempo: {new Date(b.due_date).toLocaleDateString('id-ID')}</p>
-                                                <p className="text-lg font-bold text-slate-900">{formatRp(b.amount)}</p>
-                                            </div>
-                                            <div>
-                                                {b.status !== 'PAID' && (
-                                                    <button onClick={() => setPayBill(b)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors">Bayar</button>
-                                                )}
-                                                {b.status === 'PAID' && (
-                                                    <span className="text-slate-400 text-sm font-medium">Selesai</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                {/* Notification Banner */}
+                {overdueAmount > 0 && (
+                    <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-start gap-3 relative overflow-hidden shadow-sm">
+                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 0l20 20-20 20L0 20z\' fill=\'%23064E3B\' fill-opacity=\'0.03\' fill-rule=\'evenodd\'/%3E%3C/svg%3E')] opacity-10 mix-blend-multiply pointer-events-none"></div>
+                        <span className="material-symbols-outlined shrink-0 mt-0.5">warning</span>
+                        <div>
+                            <p className="font-body-md text-body-md font-semibold mb-1">Pengingat Pembayaran</p>
+                            <p className="font-body-sm text-body-sm">Harap segera selesaikan tunggakan pembayaran untuk memastikan kelancaran kegiatan belajar mengajar.</p>
                         </div>
                     </div>
-                );
-            })}
+                )}
 
-            {payBill && (
-                <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
-                    <Card className="w-full max-w-md mx-4">
-                        <div className="p-6">
-                            <h2 className="text-lg font-bold mb-2">Simulasi Pembayaran</h2>
-                            <p className="text-sm text-slate-500 mb-6">{payBill.bill_type.name} {payBill.period} - <strong className="text-slate-900">{formatRp(payBill.amount)}</strong></p>
-                            <form onSubmit={handlePay}>
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Pilih Metode (Simulasi)</label>
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
-                                            <input type="radio" name="method" defaultChecked className="text-blue-600" />
-                                            <span className="font-medium">QRIS</span>
-                                        </label>
-                                        <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
-                                            <input type="radio" name="method" className="text-blue-600" />
-                                            <span className="font-medium">Virtual Account / Transfer Bank</span>
-                                        </label>
+                {/* Overdue Alert Card */}
+                {overdueAmount > 0 && (
+                    <section className="bg-surface-container-lowest rounded-[16px] border border-error/20 p-6 relative overflow-hidden group shadow-[0_4px_12px_rgba(186,26,26,0.05)]">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-bl-full pointer-events-none transition-transform duration-500 group-hover:scale-110"></div>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-error">error</span>
+                                    <h2 className="font-label-md text-label-md text-error tracking-wider uppercase">Tunggakan Tagihan</h2>
+                                </div>
+                                <p className="font-numeric-lg text-numeric-lg text-on-background">{formatRp(overdueAmount)}</p>
+                            </div>
+                            <Link href={route('parent.bills')} className="w-full md:w-auto bg-[#ba1a1a] hover:bg-[#93000a] text-white font-label-md text-label-md py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                <span className="material-symbols-outlined text-sm">payments</span>
+                                Bayar Sekarang
+                            </Link>
+                        </div>
+                    </section>
+                )}
+
+                {/* Current Summary Card */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <section className="bg-surface-container-lowest rounded-[16px] border border-outline-variant/30 p-6 flex flex-col justify-between relative overflow-hidden hover:shadow-[0_4px_12px_rgba(6,78,59,0.05)] transition-shadow">
+                        <div className="absolute top-0 right-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 0l20 20-20 20L0 20z\' fill=\'%23064E3B\' fill-opacity=\'0.03\' fill-rule=\'evenodd\'/%3E%3C/svg%3E')] opacity-5 pointer-events-none"></div>
+                        <div className="relative z-10">
+                            <p className="font-label-md text-label-md text-on-surface-variant mb-2">TOTAL BELUM LUNAS</p>
+                            <p className="font-numeric-lg text-numeric-lg text-primary">{formatRp(totalUnpaid)}</p>
+                        </div>
+                        <div className="mt-6 flex items-center gap-2 bg-secondary-container/30 text-on-secondary-container px-3 py-1.5 rounded-full w-fit relative z-10">
+                            <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+                            <span className="font-label-md text-label-md text-[10px]">{unpaidBills.length} Tagihan Aktif</span>
+                        </div>
+                    </section>
+
+                    <section className="bg-surface-container-lowest rounded-[16px] border border-outline-variant/30 p-6 flex flex-col justify-between hover:shadow-[0_4px_12px_rgba(6,78,59,0.05)] transition-shadow relative">
+                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 rounded-full pointer-events-none"></div>
+                        <div>
+                            <p className="font-label-md text-label-md text-on-surface-variant mb-2">STATUS AKUN</p>
+                            <p className="font-headline-md text-headline-md text-on-background">Aktif</p>
+                            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{students.length} Siswa Terdaftar</p>
+                        </div>
+                        <div className="mt-6 flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full w-fit">
+                            <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                            <span className="font-label-md text-label-md text-[10px]">Portal Orang Tua</span>
+                        </div>
+                    </section>
+                </div>
+
+                {/* Detailed Breakdown List */}
+                <section className="mb-8">
+                    <h3 className="font-headline-md text-headline-md text-on-background mb-4 mt-2">Daftar Siswa</h3>
+                    <div className="bg-surface-container-lowest rounded-[16px] border border-outline-variant/30 overflow-hidden shadow-sm">
+                        {students.map((student: any, idx: number) => (
+                            <div key={student.id} className={`flex items-center justify-between p-5 hover:bg-surface-container-low/50 transition-colors ${idx !== students.length - 1 ? 'border-b border-outline-variant/20' : ''}`}>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 font-bold">
+                                        {student.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-body-md text-body-md font-semibold text-on-background">{student.name}</p>
+                                        <p className="font-body-sm text-body-sm text-on-surface-variant">NIS: {student.nis} • Kelas: {student.student_class?.name}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-3">
-                                    <button type="button" onClick={() => setPayBill(null)} className="flex-1 py-2 text-slate-700 hover:bg-slate-100 rounded-lg font-medium border border-slate-200">Batal</button>
-                                    <button type="submit" disabled={processing} className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">{processing ? 'Memproses...' : 'Lanjutkan'}</button>
-                                </div>
-                            </form>
-                        </div>
-                    </Card>
-                </div>
-            )}
+                                <Link href={route('parent.bills')} className="text-primary font-label-md hover:underline">
+                                    Lihat Tagihan
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+            </div>
         </ParentLayout>
     );
 }

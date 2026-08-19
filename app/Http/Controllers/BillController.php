@@ -38,7 +38,8 @@ class BillController extends Controller {
             'class_id' => 'nullable|exists:student_classes,id',
             'period' => 'required|string',
             'amount' => 'required|numeric|min:1',
-            'due_date' => 'required|date'
+            'due_date' => 'required|date',
+            'generate_mode' => 'nullable|in:single,semester1,semester2,year'
         ]);
 
         $studentQuery = \App\Models\Student::where('status', 'ACTIVE');
@@ -51,20 +52,46 @@ class BillController extends Controller {
             return back()->with('error', 'Tidak ada siswa aktif di kelas tersebut.');
         }
 
+        $generateMode = $request->input('generate_mode', 'single');
+        $periods = [];
+        
+        if ($generateMode === 'semester1') {
+            $months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            foreach ($months as $i => $m) {
+                $periods[] = ['name' => $m, 'offset' => $i];
+            }
+        } elseif ($generateMode === 'semester2') {
+            $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+            foreach ($months as $i => $m) {
+                $periods[] = ['name' => $m, 'offset' => $i];
+            }
+        } elseif ($generateMode === 'year') {
+            $months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+            foreach ($months as $i => $m) {
+                $periods[] = ['name' => $m, 'offset' => $i];
+            }
+        } else {
+            $periods[] = ['name' => $validated['period'], 'offset' => 0];
+        }
+
         $bills = [];
         $now = now();
+        $baseDueDate = \Carbon\Carbon::parse($validated['due_date']);
+
         foreach ($students as $studentId) {
-            $bills[] = [
-                'student_id' => $studentId,
-                'bill_type_id' => $validated['bill_type_id'],
-                'academic_year_id' => $validated['academic_year_id'],
-                'period' => $validated['period'],
-                'amount' => $validated['amount'],
-                'due_date' => $validated['due_date'],
-                'status' => 'UNPAID',
-                'created_at' => $now,
-                'updated_at' => $now
-            ];
+            foreach ($periods as $p) {
+                $bills[] = [
+                    'student_id' => $studentId,
+                    'bill_type_id' => $validated['bill_type_id'],
+                    'academic_year_id' => $validated['academic_year_id'],
+                    'period' => $p['name'],
+                    'amount' => $validated['amount'],
+                    'due_date' => (clone $baseDueDate)->addMonthsNoOverflow($p['offset'])->format('Y-m-d'),
+                    'status' => 'UNPAID',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ];
+            }
         }
 
         // Chunk insert to handle thousands of records safely

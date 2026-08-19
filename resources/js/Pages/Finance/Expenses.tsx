@@ -36,7 +36,7 @@ export default function Expenses({ expenses, total, categories }: any) {
                 <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium">+ Tambah Pengeluaran</button>
             </div>
             <Card>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table className="w-full text-sm text-left text-slate-500">
                         <thead className="bg-slate-50 border-b">
                             <tr><th className="px-6 py-3">Tanggal</th><th className="px-6 py-3">Kategori</th><th className="px-6 py-3">Keterangan</th><th className="px-6 py-3 text-right">Nominal</th></tr>

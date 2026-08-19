@@ -33,7 +33,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->role === 'guardian') {
+        if (in_array($request->user()->role, ['guardian', 'siswa'])) {
             return redirect()->intended(route('parent.dashboard', absolute: false));
         }
 

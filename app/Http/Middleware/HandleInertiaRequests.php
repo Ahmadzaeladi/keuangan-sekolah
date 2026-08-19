@@ -29,10 +29,23 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $userData = $user ? $user->toArray() : null;
+
+        if ($user && $user->role === 'siswa') {
+            $student = \App\Models\Student::with('studentClass')->where('nis', $user->username)->first();
+            if ($student) {
+                if ($student->studentClass) {
+                    $userData['class_name'] = $student->studentClass->name;
+                }
+                $userData['photo'] = $student->photo ? asset('storage/' . $student->photo) : null;
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $userData,
             ],
         ];
     }

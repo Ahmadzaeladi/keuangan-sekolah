@@ -33,8 +33,12 @@ export default function PaymentHistory({ payments, filters }: any) {
                                 className="pl-10 pr-4 py-2 w-full bg-surface-container-low border border-outline-variant rounded-lg focus:border-primary focus:ring-0 text-sm"
                             />
                         </form>
+                        <a href={route('reports.payments.export', { search })} className="bg-surface-container-low border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">download</span>
+                            Export Excel
+                        </a>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table className="w-full text-left min-w-[800px]">
                             <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider">
                                 <tr>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function FinanceReport({ incomes, expenses, currentMonth, currentYear }: any) {
@@ -7,16 +7,35 @@ export default function FinanceReport({ incomes, expenses, currentMonth, current
     const totalExpense = expenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0);
     const netTotal = totalIncome - totalExpense;
 
+    const [month, setMonth] = useState(currentMonth);
+    const [year, setYear] = useState(currentYear);
+
+    const handleFilter = () => {
+        router.get(route('reports.finance'), { month, year }, { preserveState: true });
+    };
+
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
     return (
         <DashboardLayout>
             <Head title="Laporan Keuangan" />
             <div className="max-w-container-max mx-auto w-full">
-                <div className="flex justify-between items-end mb-6 mt-4 md:mt-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 mt-4 md:mt-8">
                     <div>
                         <h2 className="font-headline-lg text-headline-lg text-on-surface">Laporan Keuangan</h2>
                         <p className="font-body-md text-body-md text-on-surface-variant mt-2">Periode {months[currentMonth - 1]} {currentYear}</p>
+                    </div>
+                    <div className="flex gap-2 items-center flex-wrap">
+                        <select value={month} onChange={e => setMonth(e.target.value)} className="pl-4 pr-10 py-2 border rounded-lg appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231b1c19%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_12px] bg-[right_16px_center] bg-surface">
+                            {months.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+                        </select>
+                        <select value={year} onChange={e => setYear(e.target.value)} className="pl-4 pr-10 py-2 border rounded-lg appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231b1c19%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_12px] bg-[right_16px_center] bg-surface">
+                            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                        <button onClick={handleFilter} className="bg-primary text-white px-4 py-2 rounded-lg">Filter</button>
+                        <a href={route('reports.finance.export', { month, year })} className="bg-surface-container-low border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">download</span> Export
+                        </a>
                     </div>
                 </div>
 
@@ -40,7 +59,7 @@ export default function FinanceReport({ incomes, expenses, currentMonth, current
                         <div className="p-4 border-b border-outline-variant bg-surface-bright">
                             <h3 className="font-headline-md text-on-surface">Rincian Pemasukan</h3>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase">
                                     <tr>
@@ -69,7 +88,7 @@ export default function FinanceReport({ incomes, expenses, currentMonth, current
                         <div className="p-4 border-b border-outline-variant bg-surface-bright">
                             <h3 className="font-headline-md text-on-surface">Rincian Pengeluaran</h3>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-surface-container-low text-on-surface-variant text-xs uppercase">
                                     <tr>

@@ -50,7 +50,7 @@ class LoginRequest extends FormRequest
         // Disini kita cek jika dia pilih 'siswa' maka rolenya harus 'guardian' atau dia adalah siswa
         // Jika dia pilih 'staff' maka rolenya harus selain 'guardian' (misal: bendahara, admin, dll)
         if ($user) {
-            $isSiswa = $user->role === 'guardian';
+            $isSiswa = in_array($user->role, ['guardian', 'siswa']);
             $isStaff = in_array($user->role, ['bendahara', 'admin', 'staff']);
             
             if ($this->role_type === 'siswa' && !$isSiswa) {

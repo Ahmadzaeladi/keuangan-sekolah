@@ -27,10 +27,15 @@ Route::middleware('auth')->group(function () {
 
     // Students
     Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
+    Route::post('/students', [StudentController::class, 'store'])->name('students.store');
     Route::get('/students/promotion', [StudentController::class, 'promotion'])->name('students.promotion');
     Route::post('/students/promote', [StudentController::class, 'promote'])->name('students.promote');
     Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
     Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+    Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+    Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
     // Bills
     Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
@@ -55,11 +60,20 @@ Route::middleware('auth')->group(function () {
 
     // Reports
     Route::get('/reports/finance', [ReportController::class, 'finance'])->name('reports.finance');
+    Route::get('/reports/finance/export', [ReportController::class, 'exportFinance'])->name('reports.finance.export');
     Route::get('/reports/payments', [ReportController::class, 'payments'])->name('reports.payments');
+    Route::get('/reports/payments/export', [ReportController::class, 'exportPayments'])->name('reports.payments.export');
 
     // Parent Portal
     Route::get('/parent/dashboard', [ParentPortalController::class, 'dashboard'])->name('parent.dashboard');
-    Route::post('/parent/pay/{bill}', [ParentPortalController::class, 'pay'])->name('parent.pay');
+    Route::get('/parent/notifications', [ParentPortalController::class, 'notifications'])->name('parent.notifications');
+    Route::get('/parent/bills', [ParentPortalController::class, 'bills'])->name('parent.bills');
+    Route::get('/parent/profile', [ParentPortalController::class, 'profile'])->name('parent.profile');
+    
+    Route::get('/parent/pay/{bill}', [ParentPortalController::class, 'paymentMethod'])->name('parent.pay.method');
+    Route::post('/parent/pay/{bill}/instruction', [ParentPortalController::class, 'paymentInstruction'])->name('parent.pay.instruction');
+    Route::post('/parent/pay/{bill}/process', [ParentPortalController::class, 'processPayment'])->name('parent.pay.process');
+    Route::get('/parent/payment-success/{payment}', [ParentPortalController::class, 'paymentSuccess'])->name('parent.payment.success');
 });
 
 require __DIR__.'/auth.php';
