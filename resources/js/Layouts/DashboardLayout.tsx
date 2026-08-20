@@ -48,6 +48,7 @@ export default function DashboardLayout({
             name: "PEMBAYARAN",
             items: [
                 { name: "Tagihan", href: "/bills", icon: "receipt_long" },
+                { name: "Jenis Tagihan", href: "/bill-types", icon: "category" },
                 { name: "Pembayaran", href: "/payments", icon: "payments" },
                 {
                     name: "Tunggakan",

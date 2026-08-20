@@ -21,13 +21,15 @@ class BillController extends Controller {
         $classes = \App\Models\StudentClass::all();
         $billTypes = \App\Models\BillType::all();
         $academicYears = \App\Models\AcademicYear::where('is_active', true)->get();
+        $allStudents = \App\Models\Student::where('status', 'ACTIVE')->orderBy('name')->get(['id', 'name', 'nis']);
 
         return Inertia::render('Bills/Index', [
             'bills' => $bills,
             'filters' => $request->only('search'),
             'classes' => $classes,
             'billTypes' => $billTypes,
-            'academicYears' => $academicYears
+            'academicYears' => $academicYears,
+            'allStudents' => $allStudents
         ]);
     }
 
@@ -36,6 +38,7 @@ class BillController extends Controller {
             'bill_type_id' => 'required|exists:bill_types,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'class_id' => 'nullable|exists:student_classes,id',
+            'student_id' => 'nullable|exists:students,id',
             'period' => 'required|string',
             'amount' => 'required|numeric|min:1',
             'due_date' => 'required|date',
@@ -43,13 +46,15 @@ class BillController extends Controller {
         ]);
 
         $studentQuery = \App\Models\Student::where('status', 'ACTIVE');
-        if (!empty($validated['class_id'])) {
+        if (!empty($validated['student_id'])) {
+            $studentQuery->where('id', $validated['student_id']);
+        } elseif (!empty($validated['class_id'])) {
             $studentQuery->where('student_class_id', $validated['class_id']);
         }
         
         $students = $studentQuery->pluck('id');
         if ($students->isEmpty()) {
-            return back()->with('error', 'Tidak ada siswa aktif di kelas tersebut.');
+            return back()->with('error', 'Tidak ada siswa yang sesuai untuk digenerate tagihannya.');
         }
 
         $generateMode = $request->input('generate_mode', 'single');
@@ -77,9 +82,27 @@ class BillController extends Controller {
         $bills = [];
         $now = now();
         $baseDueDate = \Carbon\Carbon::parse($validated['due_date']);
+        
+        // Fetch existing bills to prevent duplicates
+        $existingBills = Bill::whereIn('student_id', $students)
+            ->where('bill_type_id', $validated['bill_type_id'])
+            ->where('academic_year_id', $validated['academic_year_id'])
+            ->get(['student_id', 'period'])
+            ->groupBy('student_id')
+            ->map(function ($items) {
+                return $items->pluck('period')->toArray();
+            })
+            ->toArray();
 
         foreach ($students as $studentId) {
+            $studentExistingPeriods = $existingBills[$studentId] ?? [];
+            
             foreach ($periods as $p) {
+                // Skip if this period already exists for the student
+                if (in_array($p['name'], $studentExistingPeriods)) {
+                    continue;
+                }
+                
                 $bills[] = [
                     'student_id' => $studentId,
                     'bill_type_id' => $validated['bill_type_id'],
@@ -100,5 +123,36 @@ class BillController extends Controller {
         }
 
         return back()->with('success', count($bills) . ' tagihan berhasil digenerate.');
+    }
+
+    public function destroy(Bill $bill) {
+        if ($bill->status === 'PAID') {
+            return back()->with('error', 'Tagihan yang sudah dibayar tidak dapat dihapus.');
+        }
+        $bill->delete();
+        return back()->with('success', 'Tagihan berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request) {
+        $validated = $request->validate([
+            'bill_type_id' => 'required|exists:bill_types,id',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'class_id' => 'nullable|exists:student_classes,id',
+        ]);
+
+        $query = Bill::where('status', 'UNPAID')
+            ->where('bill_type_id', $validated['bill_type_id'])
+            ->where('academic_year_id', $validated['academic_year_id']);
+
+        if (!empty($validated['class_id'])) {
+            $query->whereHas('student', function ($q) use ($validated) {
+                $q->where('student_class_id', $validated['class_id']);
+            });
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        return back()->with('success', $count . ' tagihan belum lunas berhasil dihapus secara massal.');
     }
 }

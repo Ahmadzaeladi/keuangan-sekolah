@@ -27,41 +27,40 @@ class StudentController extends Controller {
         ]);
     }
 
-        public function export() {
-        $fileName = 'Data_Siswa_SIKOLA.csv';
+    public function export() {
+        $fileName = 'Data_Siswa_PONPES_DKC.xlsx';
         $students = \App\Models\Student::with(['studentClass', 'guardian.user'])->get();
 
-        $headers = array(
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        );
+        $data = [];
+        $data[] = [
+            '<b>NIS</b>', '<b>NISN</b>', '<b>Nama Siswa</b>', '<b>Kelas</b>', 
+            '<b>Jenis Kelamin</b>', '<b>Agama</b>', '<b>Tempat Lahir</b>', 
+            '<b>Tanggal Lahir</b>', '<b>Alamat</b>', '<b>Nama Wali</b>', 
+            '<b>No Telp Wali</b>', '<b>Email Wali</b>'
+        ];
 
-        $columns = ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Jenis Kelamin', 'Agama', 'Alamat', 'Nama Wali', 'No Telp Wali', 'Email Wali'];
+        foreach ($students as $s) {
+            // Prepend a single quote or space to force string if needed, but SimpleXLSXGen handles strings well
+            $data[] = [
+                (string)$s->nis,
+                (string)$s->nisn,
+                $s->name,
+                $s->studentClass ? $s->studentClass->name : '',
+                $s->gender,
+                $s->religion,
+                $s->birth_place,
+                $s->birth_date ? date('d-m-Y', strtotime($s->birth_date)) : '',
+                $s->address,
+                $s->guardian ? $s->guardian->name : '',
+                (string)($s->guardian ? $s->guardian->phone : ''),
+                $s->guardian && $s->guardian->user ? $s->guardian->user->email : '',
+            ];
+        }
 
-        $callback = function() use($students, $columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-            foreach ($students as $s) {
-                $row = [
-                    $s->nis,
-                    $s->nisn,
-                    $s->name,
-                    $s->studentClass ? $s->studentClass->name : '',
-                    $s->gender,
-                    $s->religion,
-                    $s->address,
-                    $s->guardian ? $s->guardian->name : '',
-                    $s->guardian ? $s->guardian->phone : '',
-                    $s->guardian && $s->guardian->user ? $s->guardian->user->email : '',
-                ];
-                fputcsv($file, $row);
-            }
-            fclose($file);
-        };
-        return response()->stream($callback, 200, $headers);
+        $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($data);
+        return response((string) $xlsx)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
     }
 
     public function show(Student $student) {
@@ -164,11 +163,21 @@ class StudentController extends Controller {
 
         $user = \App\Models\User::where('username', $oldNis)->first();
         if ($user) {
-            $user->update([
+            $userData = [
                 'name' => $student->name,
                 'username' => $student->nis,
-                'email' => $student->nis . '@siswa.com'
-            ]);
+            ];
+            
+            $newEmail = $student->nis . '@siswa.com';
+            if ($user->email !== $newEmail) {
+                // Check if the new email is already taken by another user
+                $emailTaken = \App\Models\User::where('email', $newEmail)->where('id', '!=', $user->id)->exists();
+                if (!$emailTaken) {
+                    $userData['email'] = $newEmail;
+                }
+            }
+
+            $user->update($userData);
         }
 
         return redirect()->route('students.index')->with('success', 'Data siswa berhasil diperbarui.');

@@ -37,14 +37,38 @@ class ParentPortalController extends Controller {
         if ($user->role === 'guardian') {
             $guardian = $user->guardian;
             if (!$guardian) abort(403, 'Profil wali tidak ditemukan.');
-            $students = Student::with(['bills.billType'])->where('guardian_id', $guardian->id)->get();
+            $students = Student::with(['bills' => function ($q) {
+                $q->where('status', '!=', 'PAID')->with('billType');
+            }])->where('guardian_id', $guardian->id)->get();
         } else if ($user->role === 'siswa') {
-            $students = Student::with(['bills.billType'])->where('nis', $user->username)->get();
+            $students = Student::with(['bills' => function ($q) {
+                $q->where('status', '!=', 'PAID')->with('billType');
+            }])->where('nis', $user->username)->get();
         } else {
             abort(403, 'Akses ditolak.');
         }
 
         return Inertia::render('Parent/Bills', ['students' => $students]);
+    }
+
+    public function history() {
+        $user = auth()->user();
+        $students = collect();
+        if ($user->role === 'guardian') {
+            $guardian = $user->guardian;
+            if (!$guardian) abort(403, 'Profil wali tidak ditemukan.');
+            $students = Student::with(['bills' => function ($q) {
+                $q->where('status', 'PAID')->with('billType');
+            }])->where('guardian_id', $guardian->id)->get();
+        } else if ($user->role === 'siswa') {
+            $students = Student::with(['bills' => function ($q) {
+                $q->where('status', 'PAID')->with('billType');
+            }])->where('nis', $user->username)->get();
+        } else {
+            abort(403, 'Akses ditolak.');
+        }
+
+        return Inertia::render('Parent/History', ['students' => $students]);
     }
 
     public function profile() {

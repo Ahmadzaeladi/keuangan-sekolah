@@ -45,11 +45,11 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
                         </p>
                     </div>
                 </div>
-                <Link href={route('parent.profile')} className="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden cursor-pointer transition-transform duration-200 active:scale-95 hover:opacity-80 border-2 border-outline-variant flex items-center justify-center text-primary" title="Profil">
+                <Link href={route('parent.profile')} className="w-14 h-14 rounded-full bg-surface-container-high overflow-hidden cursor-pointer flex-shrink-0 transition-transform duration-200 active:scale-95 hover:opacity-80 border-2 border-outline-variant flex items-center justify-center text-primary" title="Profil">
                     {user.photo ? (
                         <img alt="Foto Siswa" className="w-full h-full object-cover" src={user.photo} />
                     ) : (
-                        <span className="material-symbols-outlined text-[24px]">person</span>
+                        <span className="material-symbols-outlined text-[32px]">person</span>
                     )}
                 </Link>
             </header>
@@ -70,7 +70,10 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
                         <span className="material-symbols-outlined">dashboard</span> Dashboard
                     </Link>
                     <Link href={route('parent.bills')} className={`flex items-center gap-4 rounded-lg m-2 px-4 py-3 transition-colors duration-200 ${isActive('/parent/bills') ? 'bg-secondary-container text-on-secondary-container font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high hover:opacity-80'}`}>
-                        <span className="material-symbols-outlined">receipt_long</span> Tagihan & Riwayat
+                        <span className="material-symbols-outlined">receipt_long</span> Tagihan
+                    </Link>
+                    <Link href={route('parent.history')} className={`flex items-center gap-4 rounded-lg m-2 px-4 py-3 transition-colors duration-200 ${isActive('/parent/history') ? 'bg-secondary-container text-on-secondary-container font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high hover:opacity-80'}`}>
+                        <span className="material-symbols-outlined">history</span> Riwayat
                     </Link>
                     <Link href={route('parent.notifications')} className={`flex items-center gap-4 rounded-lg m-2 px-4 py-3 transition-colors duration-200 ${isActive('/parent/notifications') ? 'bg-secondary-container text-on-secondary-container font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high hover:opacity-80'}`}>
                         <span className="material-symbols-outlined">notifications</span> Pusat Notifikasi
@@ -100,7 +103,11 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
                 </Link>
                 <Link href={route('parent.bills')} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-150 w-16 ${isActive('/parent/bills') ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive('/parent/bills') ? "'FILL' 1" : "'FILL' 0" }}>receipt_long</span>
-                    <span className="font-label-md text-[10px] mt-1">Bills</span>
+                    <span className="font-label-md text-[10px] mt-1">Tagihan</span>
+                </Link>
+                <Link href={route('parent.history')} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-150 w-16 ${isActive('/parent/history') ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive('/parent/history') ? "'FILL' 1" : "'FILL' 0" }}>history</span>
+                    <span className="font-label-md text-[10px] mt-1">Riwayat</span>
                 </Link>
                 <Link href={route('parent.notifications')} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-150 w-16 ${isActive('/parent/notifications') ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive('/parent/notifications') ? "'FILL' 1" : "'FILL' 0" }}>notifications</span>

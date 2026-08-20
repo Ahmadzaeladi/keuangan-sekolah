@@ -64,7 +64,18 @@ export default function Dashboard({ stats, transactions, chartData }: any) {
                                 <BarChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#bfc9c3" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#404944'}} />
-                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `Rp${val/1000000}M`} tick={{fill: '#404944'}} />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        width={80}
+                                        tickFormatter={(val) => {
+                                            if (val >= 1000000000) return `Rp ${val/1000000000}M`;
+                                            if (val >= 1000000) return `Rp ${val/1000000}jt`;
+                                            if (val >= 1000) return `Rp ${val/1000}rb`;
+                                            return `Rp ${val}`;
+                                        }} 
+                                        tick={{fill: '#404944'}} 
+                                    />
                                     <Tooltip 
                                         formatter={(value) => `Rp ${(value as number).toLocaleString('id-ID')}`}
                                         cursor={{fill: '#f5f4ef'}}

@@ -60,8 +60,8 @@ class FinanceController extends Controller {
         return back()->with('success', 'Pengeluaran berhasil dicatat.');
     }
 
-        public function exportCash() {
-        $fileName = 'Buku_Kas_SIKOLA.csv';
+    public function exportCash() {
+        $fileName = 'Buku_Kas_PONPES_DKC.xlsx';
         $incomes = Income::with('category')->get()->map(function($i) {
             $i->type = 'Pemasukan';
             return $i;
@@ -73,25 +73,24 @@ class FinanceController extends Controller {
         
         $merged = $incomes->concat($expenses)->sortByDesc('date');
 
-        $headers = ["Content-type" => "text/csv", "Content-Disposition" => "attachment; filename=$fileName", "Pragma" => "no-cache", "Cache-Control" => "must-revalidate, post-check=0, pre-check=0", "Expires" => "0"];
-        $columns = ['Tanggal', 'Jenis', 'Kategori', 'Keterangan', 'Sumber', 'Nominal (Rp)'];
+        $data = [];
+        $data[] = ['<b>Tanggal</b>', '<b>Jenis</b>', '<b>Kategori</b>', '<b>Keterangan</b>', '<b>Sumber</b>', '<b>Nominal (Rp)</b>'];
         
-        $callback = function() use($merged, $columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-            foreach ($merged as $m) {
-                fputcsv($file, [
-                    $m->date, 
-                    $m->type, 
-                    $m->category ? $m->category->name : '', 
-                    $m->description, 
-                    $m->source, 
-                    $m->amount
-                ]);
-            }
-            fclose($file);
-        };
-        return response()->stream($callback, 200, $headers);
+        foreach ($merged as $m) {
+            $data[] = [
+                date('d-m-Y', strtotime($m->date)), 
+                $m->type, 
+                $m->category ? $m->category->name : '', 
+                $m->description, 
+                $m->source, 
+                $m->amount
+            ];
+        }
+
+        $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($data);
+        return response((string) $xlsx)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
     }
 
     public function cash() {

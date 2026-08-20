@@ -59,45 +59,37 @@ class ReportController extends Controller
         $incomes = Income::with('category')->whereMonth('date', $month)->whereYear('date', $year)->latest('date')->get();
         $expenses = Expense::with('category')->whereMonth('date', $month)->whereYear('date', $year)->latest('date')->get();
 
-        $fileName = "Laporan_Keuangan_{$year}_{$month}.csv";
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
-
-        $callback = function() use ($incomes, $expenses) {
-            $file = fopen('php://output', 'w');
-            
-            fputcsv($file, ['PEMASUKAN']);
-            fputcsv($file, ['Tanggal', 'Kategori', 'Deskripsi', 'Sumber', 'Jumlah']);
-            foreach ($incomes as $inc) {
-                fputcsv($file, [
-                    $inc->date,
-                    $inc->category ? $inc->category->name : '',
-                    $inc->description,
-                    $inc->source,
-                    $inc->amount
-                ]);
-            }
-            
-            fputcsv($file, []);
-            fputcsv($file, ['PENGELUARAN']);
-            fputcsv($file, ['Tanggal', 'Kategori', 'Deskripsi', 'Jumlah']);
-            foreach ($expenses as $exp) {
-                fputcsv($file, [
-                    $exp->date,
-                    $exp->category ? $exp->category->name : '',
-                    $exp->description,
-                    $exp->amount
-                ]);
-            }
-            
-            fclose($file);
-        };
-        return response()->stream($callback, 200, $headers);
+        $fileName = "Laporan_Keuangan_{$year}_{$month}.xlsx";
+        
+        $data = [];
+        $data[] = ['<b>PEMASUKAN</b>', '', '', '', ''];
+        $data[] = ['<b>Tanggal</b>', '<b>Kategori</b>', '<b>Deskripsi</b>', '<b>Sumber</b>', '<b>Jumlah</b>'];
+        foreach ($incomes as $inc) {
+            $data[] = [
+                date('d-m-Y', strtotime($inc->date)),
+                $inc->category ? $inc->category->name : '',
+                $inc->description,
+                $inc->source,
+                $inc->amount
+            ];
+        }
+        
+        $data[] = [];
+        $data[] = ['<b>PENGELUARAN</b>', '', '', ''];
+        $data[] = ['<b>Tanggal</b>', '<b>Kategori</b>', '<b>Deskripsi</b>', '<b>Jumlah</b>'];
+        foreach ($expenses as $exp) {
+            $data[] = [
+                date('d-m-Y', strtotime($exp->date)),
+                $exp->category ? $exp->category->name : '',
+                $exp->description,
+                $exp->amount
+            ];
+        }
+        
+        $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($data);
+        return response((string) $xlsx)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
     }
 
     public function exportPayments(Request $request) {
@@ -111,32 +103,26 @@ class ReportController extends Controller
         }
         $payments = $query->get();
 
-        $fileName = "Laporan_Pembayaran_Siswa.csv";
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        $fileName = "Laporan_Pembayaran_Siswa.xlsx";
+        
+        $data = [];
+        $data[] = ['<b>No. Transaksi</b>', '<b>Tanggal Bayar</b>', '<b>NIS</b>', '<b>Nama Siswa</b>', '<b>Kelas</b>', '<b>Jenis Tagihan</b>', '<b>Metode</b>', '<b>Nominal</b>'];
+        foreach ($payments as $p) {
+            $data[] = [
+                $p->payment_number,
+                date('d-m-Y H:i:s', strtotime($p->paid_at)),
+                (string)($p->student ? $p->student->nis : ''),
+                $p->student ? $p->student->name : '',
+                $p->student && $p->student->studentClass ? $p->student->studentClass->name : '',
+                $p->bill && $p->bill->billType ? $p->bill->billType->name . ' - ' . $p->bill->period : '',
+                $p->payment_method,
+                $p->amount
+            ];
+        }
 
-        $callback = function() use ($payments) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['No. Transaksi', 'Tanggal Bayar', 'NIS', 'Nama Siswa', 'Kelas', 'Jenis Tagihan', 'Metode', 'Nominal']);
-            foreach ($payments as $p) {
-                fputcsv($file, [
-                    $p->payment_number,
-                    $p->paid_at,
-                    $p->student ? $p->student->nis : '',
-                    $p->student ? $p->student->name : '',
-                    $p->student && $p->student->studentClass ? $p->student->studentClass->name : '',
-                    $p->bill && $p->bill->billType ? $p->bill->billType->name . ' - ' . $p->bill->period : '',
-                    $p->payment_method,
-                    $p->amount
-                ]);
-            }
-            fclose($file);
-        };
-        return response()->stream($callback, 200, $headers);
+        $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($data);
+        return response((string) $xlsx)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
     }
 }

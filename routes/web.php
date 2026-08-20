@@ -40,6 +40,14 @@ Route::middleware('auth')->group(function () {
     // Bills
     Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
     Route::post('/bills/bulk', [BillController::class, 'bulkStore'])->name('bills.bulkStore');
+    Route::delete('/bills/bulk', [BillController::class, 'bulkDestroy'])->name('bills.bulkDestroy');
+    Route::delete('/bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
+
+    // Bill Types
+    Route::get('/bill-types', [\App\Http\Controllers\BillTypeController::class, 'index'])->name('bill-types.index');
+    Route::post('/bill-types', [\App\Http\Controllers\BillTypeController::class, 'store'])->name('bill-types.store');
+    Route::put('/bill-types/{billType}', [\App\Http\Controllers\BillTypeController::class, 'update'])->name('bill-types.update');
+    Route::delete('/bill-types/{billType}', [\App\Http\Controllers\BillTypeController::class, 'destroy'])->name('bill-types.destroy');
 
     // Payments
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -68,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/parent/dashboard', [ParentPortalController::class, 'dashboard'])->name('parent.dashboard');
     Route::get('/parent/notifications', [ParentPortalController::class, 'notifications'])->name('parent.notifications');
     Route::get('/parent/bills', [ParentPortalController::class, 'bills'])->name('parent.bills');
+    Route::get('/parent/history', [ParentPortalController::class, 'history'])->name('parent.history');
     Route::get('/parent/profile', [ParentPortalController::class, 'profile'])->name('parent.profile');
     
     Route::get('/parent/pay/{bill}', [ParentPortalController::class, 'paymentMethod'])->name('parent.pay.method');
