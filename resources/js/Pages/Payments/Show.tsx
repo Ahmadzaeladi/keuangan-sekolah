@@ -11,7 +11,7 @@ export default function Show({ payment }: any) {
             <div className="max-w-2xl mx-auto">
                 <Card className="p-8 mt-10">
                     <div className="text-center mb-8 border-b pb-4">
-                        <h1 className="text-2xl font-bold text-blue-600 tracking-tight">SIKOLA</h1>
+                        <h1 className="text-2xl font-bold text-blue-600 tracking-tight">Ponpes DKC</h1>
                         <p className="text-lg font-semibold mt-2">KWITANSI PEMBAYARAN</p>
                         <p className="text-slate-500">{payment.payment_number}</p>
                     </div>

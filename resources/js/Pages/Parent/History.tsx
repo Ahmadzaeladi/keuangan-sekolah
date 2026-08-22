@@ -1,22 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import ParentLayout from '@/Layouts/ParentLayout';
 
-export default function History({ students }: any) {
+export default function History({ students, academicYears }: any) {
+    const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => {
+        const active = academicYears?.find((ay: any) => ay.is_active);
+        return active ? active.id.toString() : (academicYears?.[0]?.id.toString() || '');
+    });
+    const [selectedSemester, setSelectedSemester] = useState<string>('Semua');
+
     const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
     
-    // Calculate total overdue across all students
-    let totalPaid = 0;
-    
     const allPaid: any[] = [];
-
     students.forEach((s: any) => {
         s.bills.forEach((b: any) => {
             b.studentName = s.name;
-            totalPaid += Number(b.amount);
             allPaid.push(b);
         });
     });
+
+    const ganjilMonths = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const genapMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+
+    const filteredPaid = allPaid.filter(b => {
+        if (selectedAcademicYear && b.academic_year_id?.toString() !== selectedAcademicYear) return false;
+        
+        if (selectedSemester !== 'Semua') {
+            const periodString = b.period || '';
+            const isGanjil = ganjilMonths.some(m => periodString.includes(m));
+            const isGenap = genapMonths.some(m => periodString.includes(m));
+            
+            if (selectedSemester === 'Ganjil' && !isGanjil) return false;
+            if (selectedSemester === 'Genap' && !isGenap) return false;
+        }
+        return true;
+    });
+
+    let totalPaid = 0;
+    filteredPaid.forEach(b => totalPaid += Number(b.amount));
 
     return (
         <ParentLayout title="Riwayat Pembayaran">
@@ -24,15 +45,32 @@ export default function History({ students }: any) {
             
             <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-4 space-y-6 pb-8">
                 {/* Filter Section */}
-                <section className="bg-surface rounded-xl border border-outline-variant/30 p-4 shadow-sm flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tahun Ajaran</span>
-                        <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">2023 - 2024</span>
+                <section className="bg-surface rounded-xl border border-outline-variant/30 p-4 shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <div className="flex flex-col flex-1 w-full">
+                        <label className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Tahun Ajaran</label>
+                        <select 
+                            value={selectedAcademicYear} 
+                            onChange={e => setSelectedAcademicYear(e.target.value)}
+                            className="bg-transparent border border-outline-variant rounded-lg p-2 text-primary font-semibold focus:ring-primary focus:border-primary"
+                        >
+                            <option value="">Semua Tahun</option>
+                            {academicYears?.map((ay: any) => (
+                                <option key={ay.id} value={ay.id}>{ay.name}</option>
+                            ))}
+                        </select>
                     </div>
-                    <button className="bg-primary-container text-on-primary text-body-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-primary transition-colors">
-                        <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                        Ubah
-                    </button>
+                    <div className="flex flex-col flex-1 w-full">
+                        <label className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Semester</label>
+                        <select 
+                            value={selectedSemester} 
+                            onChange={e => setSelectedSemester(e.target.value)}
+                            className="bg-transparent border border-outline-variant rounded-lg p-2 text-primary font-semibold focus:ring-primary focus:border-primary"
+                        >
+                            <option value="Semua">Semua Semester</option>
+                            <option value="Ganjil">Ganjil</option>
+                            <option value="Genap">Genap</option>
+                        </select>
+                    </div>
                 </section>
 
                 {/* Summary Card */}
@@ -48,10 +86,10 @@ export default function History({ students }: any) {
                 </section>
 
                 {/* Paid Bills */}
-                {allPaid.length > 0 ? (
+                {filteredPaid.length > 0 ? (
                     <section className="space-y-4">
                         <h3 className="font-headline-md text-headline-md text-primary pb-2 border-b border-outline-variant/30 mt-6">Riwayat Lunas</h3>
-                        {allPaid.map(b => (
+                        {filteredPaid.map(b => (
                             <div key={b.id} className="bg-surface rounded-xl border border-outline-variant/30 p-4 shadow-sm hover:shadow-[0_4px_12px_rgba(6,78,59,0.05)] transition-shadow opacity-75">
                                 <div className="flex justify-between items-center mb-3">
                                     <div className="flex items-center gap-3">
@@ -76,7 +114,7 @@ export default function History({ students }: any) {
                     </section>
                 ) : (
                     <div className="text-center py-8 text-on-surface-variant">
-                        Belum ada riwayat pembayaran.
+                        Belum ada riwayat pembayaran yang sesuai filter.
                     </div>
                 )}
             </div>

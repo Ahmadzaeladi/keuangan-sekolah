@@ -41,7 +41,7 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
                     <div className="flex flex-col">
                         <h1 className="font-headline-md text-headline-md font-bold text-primary">Halo, {user.name}</h1>
                         <p className="font-body-sm text-on-surface-variant">
-                            {user.class_name ? `Siswa Kelas ${user.class_name}` : 'Selamat datang di Portal SIKOLA'}
+                            {user.class_name ? `Siswa Kelas ${user.class_name}` : 'Selamat datang di Portal Ponpes DKC'}
                         </p>
                     </div>
                 </div>
@@ -111,7 +111,7 @@ export default function ParentLayout({ children, hideNav = false, title = 'Amana
                 </Link>
                 <Link href={route('parent.notifications')} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-150 w-16 ${isActive('/parent/notifications') ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive('/parent/notifications') ? "'FILL' 1" : "'FILL' 0" }}>notifications</span>
-                    <span className="font-label-md text-[10px] mt-1">Alerts</span>
+                    <span className="font-label-md text-[10px] mt-1">Pemberitahuan</span>
                 </Link>
                 <Link href={route('parent.profile')} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-150 w-16 ${isActive('/parent/profile') ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive('/parent/profile') ? "'FILL' 1" : "'FILL' 0" }}>person</span>

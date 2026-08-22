@@ -39,7 +39,7 @@ class BillController extends Controller {
             'academic_year_id' => 'required|exists:academic_years,id',
             'class_id' => 'nullable|exists:student_classes,id',
             'student_id' => 'nullable|exists:students,id',
-            'period' => 'required|string',
+            'period' => 'required_if:generate_mode,single|nullable|string',
             'amount' => 'required|numeric|min:1',
             'due_date' => 'required|date',
             'generate_mode' => 'nullable|in:single,semester1,semester2,year'

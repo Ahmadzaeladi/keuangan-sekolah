@@ -33,12 +33,10 @@ export default function Bills({ students }: any) {
                 <section className="bg-surface rounded-xl border border-outline-variant/30 p-4 shadow-sm flex items-center justify-between">
                     <div className="flex flex-col">
                         <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tahun Ajaran</span>
-                        <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">2023 - 2024</span>
+                        <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+                            {new Date().getMonth() >= 6 ? `${new Date().getFullYear()} - ${new Date().getFullYear() + 1}` : `${new Date().getFullYear() - 1} - ${new Date().getFullYear()}`}
+                        </span>
                     </div>
-                    <button className="bg-primary-container text-on-primary text-body-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-primary transition-colors">
-                        <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                        Ubah
-                    </button>
                 </section>
 
                 {/* Summary Card */}

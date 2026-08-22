@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout, { cn } from '@/Layouts/DashboardLayout';
 import { Head, router, Link } from '@inertiajs/react';
 import { toast } from 'sonner';
@@ -8,6 +8,8 @@ export default function Automation({ classes = [], billTypes = [], academicYears
     const [status, setStatus] = useState('Buat Tagihan Sesuai Pilihan');
     const [isProcessing, setIsProcessing] = useState(false);
     
+    const [targetMode, setTargetMode] = useState('all');
+
     // Bulk delete state
     const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
     const [bulkDeleteForm, setBulkDeleteForm] = useState({
@@ -30,10 +32,40 @@ export default function Automation({ classes = [], billTypes = [], academicYears
     
     const [search, setSearch] = useState(filters.search || '');
 
+    // Live Search Effect
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (search !== (filters.search || '')) {
+                router.get('/bills', { search }, { preserveState: true, preserveScroll: true });
+            }
+        }, 500);
+        return () => clearTimeout(delayDebounceFn);
+    }, [search]);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/bills', { search }, { preserveState: true });
+        router.get('/bills', { search }, { preserveState: true, preserveScroll: true });
     }
+
+    // Student Search State
+    const [studentSearch, setStudentSearch] = useState('');
+    const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: any) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsStudentDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const filteredStudents = allStudents?.filter((s: any) => 
+        s.name.toLowerCase().includes(studentSearch.toLowerCase()) || 
+        s.nis.toLowerCase().includes(studentSearch.toLowerCase())
+    );
 
     const handleGenerate = () => {
         setIsProcessing(true);
@@ -119,29 +151,93 @@ export default function Automation({ classes = [], billTypes = [], academicYears
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Siswa Spesifik (Opsional)</label>
+                            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Pilihan Target *</label>
                             <select 
-                                value={form.student_id}
+                                value={targetMode}
                                 onChange={e => {
-                                    setForm({...form, student_id: e.target.value});
-                                    if(e.target.value) setForm(f => ({...f, class_id: ''})); // Reset class if student is selected
+                                    setTargetMode(e.target.value);
+                                    if(e.target.value === 'all') {
+                                        setForm({...form, student_id: '', class_id: ''});
+                                    } else if(e.target.value === 'class') {
+                                        setForm({...form, student_id: ''});
+                                    } else if(e.target.value === 'specific') {
+                                        setForm({...form, class_id: ''});
+                                    }
                                 }}
                                 className="w-full pl-4 pr-10 py-3 border border-outline-variant rounded-xl appearance-none focus:border-primary outline-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231b1c19%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_12px] bg-[right_16px_center]">
-                                <option value="">Semua Siswa / Berdasarkan Kelas</option>
-                                {allStudents?.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>)}
+                                <option value="all">Semua Siswa</option>
+                                <option value="class">Berdasarkan Kelas</option>
+                                <option value="specific">Siswa Spesifik</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Kelas (Opsional)</label>
-                            <select 
-                                value={form.class_id}
-                                disabled={!!form.student_id}
-                                onChange={e => setForm({...form, class_id: e.target.value})}
-                                className="w-full pl-4 pr-10 py-3 border border-outline-variant rounded-xl appearance-none focus:border-primary outline-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231b1c19%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_12px] bg-[right_16px_center] disabled:opacity-50 disabled:bg-gray-100">
-                                <option value="">Semua Kelas</option>
-                                {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            {targetMode === 'all' && (
+                                <>
+                                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Pilih Kelas / Siswa</label>
+                                    <input disabled value="Digenerate untuk semua siswa" className="w-full px-4 py-3 border border-outline-variant rounded-xl disabled:opacity-50 disabled:bg-gray-100" />
+                                </>
+                            )}
+                            {targetMode === 'class' && (
+                                <>
+                                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Pilih Kelas *</label>
+                                    <select 
+                                        value={form.class_id}
+                                        onChange={e => setForm({...form, class_id: e.target.value})}
+                                        className="w-full pl-4 pr-10 py-3 border border-outline-variant rounded-xl appearance-none focus:border-primary outline-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231b1c19%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_12px] bg-[right_16px_center]">
+                                        <option value="">Pilih Kelas...</option>
+                                        {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </>
+                            )}
+                            {targetMode === 'specific' && (
+                                <div ref={dropdownRef} className="relative">
+                                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Pilih Siswa *</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            placeholder={form.student_id ? allStudents.find((s:any) => s.id == form.student_id)?.name : "Cari NIS atau Nama..."}
+                                            value={studentSearch}
+                                            onChange={e => {
+                                                setStudentSearch(e.target.value);
+                                                setIsStudentDropdownOpen(true);
+                                                if (form.student_id) setForm({...form, student_id: ''}); // clear selection when typing
+                                            }}
+                                            onFocus={() => setIsStudentDropdownOpen(true)}
+                                            className="w-full pl-4 pr-10 py-3 border border-outline-variant rounded-xl focus:border-primary outline-none" 
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+                                            <span className="material-symbols-outlined text-[20px]">search</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {isStudentDropdownOpen && (
+                                        <div className="absolute z-20 w-full mt-2 bg-surface border border-outline-variant rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                                            {filteredStudents?.length === 0 ? (
+                                                <div className="p-4 text-sm text-center text-on-surface-variant">Tidak ada siswa ditemukan.</div>
+                                            ) : (
+                                                filteredStudents?.map((s: any) => (
+                                                    <div 
+                                                        key={s.id} 
+                                                        onClick={() => {
+                                                            setForm({...form, student_id: s.id});
+                                                            setStudentSearch('');
+                                                            setIsStudentDropdownOpen(false);
+                                                        }}
+                                                        className={cn(
+                                                            "p-3 hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 last:border-0 transition-colors",
+                                                            form.student_id == s.id ? "bg-primary/5 border-l-4 border-l-primary" : ""
+                                                        )}
+                                                    >
+                                                        <div className="font-semibold text-on-surface text-sm">{s.name}</div>
+                                                        <div className="text-xs text-on-surface-variant font-mono">{s.nis}</div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div>

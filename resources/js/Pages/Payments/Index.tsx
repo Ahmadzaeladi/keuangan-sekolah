@@ -264,7 +264,7 @@ export default function Payments() {
                             </div>
                             <div className="shrink-0 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://sikola.com/verify/${lastTransaction.id}&margin=0`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://ponpesdkc.com/verify/${lastTransaction.id}&margin=0`}
                                     alt="Verification QR"
                                     className="w-16 h-16"
                                 />

@@ -34,7 +34,7 @@ class PaymentController extends Controller {
     }
 
     public function export() {
-        $fileName = 'Laporan_Pembayaran_SIKOLA.csv';
+        $fileName = 'Laporan_Pembayaran_Ponpes_DKC.csv';
         $payments = Payment::with(['student', 'bill.billType'])->latest()->get();
 
         $headers = array(
